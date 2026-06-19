@@ -1,0 +1,658 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Krish Gandhi Meeting Timetable</title>
+  <style>
+    :root {
+      --bg: #eef7ff;
+      --card: #ffffff;
+      --line: #cfe0ea;
+      --text: #163047;
+      --muted: #4c6478;
+      --accent: #0e9f6e;
+      --accent-soft: #e3f8ef;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 20px;
+    }
+
+    .wrap {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 14px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 24px;
+    }
+
+    .subtitle {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .table-wrap {
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      position: relative;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 900px;
+    }
+
+    th, td {
+      border: 1px solid var(--line);
+      padding: 8px;
+      vertical-align: top;
+    }
+
+    th {
+      background: #e8f5ff;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      text-align: left;
+      font-size: 13px;
+    }
+
+    th.time {
+      min-width: 80px;
+      width: 80px;
+      left: 0;
+      z-index: 3;
+    }
+
+    td.time {
+      font-weight: 700;
+      font-size: 12px;
+      color: var(--muted);
+      background: #f2fbff;
+      position: sticky;
+      left: 0;
+      z-index: 1;
+      min-width: 80px;
+      width: 80px;
+    }
+
+    td.slot {
+      min-width: 170px;
+      height: 64px;
+      font-size: 13px;
+      line-height: 1.35;
+      white-space: pre-wrap;
+      background: #fffef9;
+      border-left: 6px solid transparent;
+      transition: background-color 120ms ease, color 120ms ease, border-color 120ms ease;
+    }
+
+    tbody td.slot:nth-child(2n) {
+      background: #fff7ef;
+    }
+
+    tbody td.slot:nth-child(3n) {
+      background: #f3fff5;
+    }
+
+    td.slot:focus {
+      outline: 2px solid #ff8f3f;
+      background: #fff1e4;
+    }
+
+    td.slot.busy {
+      background: #6264a7 !important;
+      color: #ffffff;
+      border-left-color: #464775;
+      font-weight: 700;
+    }
+
+    td.slot.busy:focus {
+      outline-color: #464775;
+      background: #5a5c9b !important;
+    }
+
+    td.slot.busy-welcome {
+      background: #f59e0b !important;
+      border-left-color: #b45309;
+      color: #ffffff;
+    }
+
+    td.slot.busy-welcome:focus {
+      outline-color: #b45309;
+      background: #d97706 !important;
+    }
+
+    td.slot.busy-geo {
+      background: #0ea5e9 !important;
+      border-left-color: #0369a1;
+      color: #ffffff;
+    }
+
+    td.slot.busy-geo:focus {
+      outline-color: #0369a1;
+      background: #0284c7 !important;
+    }
+
+    td.slot.busy-vessel {
+      background: #7c3aed !important;
+      border-left-color: #5b21b6;
+      color: #ffffff;
+    }
+
+    td.slot.busy-vessel:focus {
+      outline-color: #5b21b6;
+      background: #6d28d9 !important;
+    }
+
+    td.slot.busy-team {
+      background: #ec4899 !important;
+      border-left-color: #be185d;
+      color: #ffffff;
+    }
+
+    td.slot.busy-team:focus {
+      outline-color: #be185d;
+      background: #db2777 !important;
+    }
+
+    td.slot.busy-project {
+      background: #f97316 !important;
+      border-left-color: #c2410c;
+      color: #ffffff;
+    }
+
+    td.slot.busy-project:focus {
+      outline-color: #c2410c;
+      background: #ea580c !important;
+    }
+
+    td.slot.busy-docs {
+      background: #14b8a6 !important;
+      border-left-color: #0f766e;
+      color: #ffffff;
+    }
+
+    td.slot.busy-docs:focus {
+      outline-color: #0f766e;
+      background: #0d9488 !important;
+    }
+
+    td.slot.busy-start {
+      border-top-left-radius: 8px;
+      border-top-right-radius: 8px;
+    }
+
+    td.slot.busy-middle {
+      border-top-color: #6264a7;
+      border-bottom-color: #6264a7;
+    }
+
+    td.slot.busy-end {
+      border-bottom-left-radius: 8px;
+      border-bottom-right-radius: 8px;
+    }
+
+    td.slot.busy-start.busy-end,
+    td.slot.busy-single {
+      border-radius: 8px;
+    }
+
+    .hint {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .resources {
+      margin-bottom: 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--card);
+      overflow: hidden;
+    }
+
+    .resources summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 12px 16px;
+      font-weight: 700;
+      background: #f2fbff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .resources summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .resources summary::after {
+      content: "▸";
+      font-size: 22px;
+      color: #000000;
+      font-weight: 700;
+      line-height: 1;
+      transition: transform 120ms ease;
+    }
+
+    .resources[open] summary::after {
+      transform: rotate(90deg);
+    }
+
+    .resources-content {
+      padding: 12px 16px 16px;
+      border-top: 1px solid var(--line);
+    }
+
+    .resources-content a {
+      color: #0b63ce;
+      text-decoration: none;
+      word-break: break-all;
+      display: block;
+      margin-top: 8px;
+    }
+
+    .resources-content a:hover {
+      text-decoration: underline;
+    }
+
+    .now-line {
+      position: absolute;
+      height: 2px;
+      background: #d90429;
+      z-index: 6;
+      pointer-events: none;
+      display: none;
+    }
+
+    .now-line::before {
+      content: "";
+      position: absolute;
+      left: -6px;
+      top: -4px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #d90429;
+    }
+
+    .now-label {
+      position: absolute;
+      z-index: 7;
+      pointer-events: none;
+      display: none;
+      background: #d90429;
+      color: #ffffff;
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1;
+      padding: 4px 6px;
+      border-radius: 6px;
+    }
+
+    .header-bar {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .nato-logo {
+      width: 52px;
+      height: 52px;
+      object-fit: contain;
+      flex: 0 0 auto;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="panel">
+      <div class="header-bar">
+        <img class="nato-logo" src="assets/nato_logo.png" alt="NATO logo" />
+        <h1>Krish Gandhi Internship Timetable</h1>
+      </div>
+    </div>
+
+    <details class="resources">
+      <summary>Resources 📚</summary>
+      <div class="resources-content">
+        <a href="https://ai.meta.com/research/sam3" target="_blank" rel="noopener noreferrer">SAM3</a>
+        <a href="https://huggingface.co/spaces/prithivMLmods/SAM3-Demo" target="_blank" rel="noopener noreferrer">SAM3 Demo</a>
+      </div>
+    </details>
+
+    <div class="table-wrap">
+      <table id="calendarTable" aria-label="Timetable meeting"></table>
+      <div id="nowLine" class="now-line" aria-hidden="true"></div>
+      <div id="nowLabel" class="now-label" aria-hidden="true"></div>
+    </div>
+  </div>
+
+  <script>
+    const table = document.getElementById("calendarTable");
+    const tableWrap = document.querySelector(".table-wrap");
+    const nowLine = document.getElementById("nowLine");
+    const nowLabel = document.getElementById("nowLabel");
+
+    const timeSlots = [];
+    for (let h = 9; h <= 17; h += 1) {
+      timeSlots.push(`${String(h).padStart(2, "0")}:00`);
+      timeSlots.push(`${String(h).padStart(2, "0")}:30`);
+    }
+    timeSlots.push("18:00");
+    const presetDayIsos = [
+      "2026-06-23",
+      "2026-06-24",
+      "2026-06-25",
+      "2026-06-29",
+      "2026-06-30"
+    ];
+
+    function formatDay(date) {
+      return new Intl.DateTimeFormat("en-GB", {
+        weekday: "long",
+        day: "2-digit",
+        month: "long"
+      }).format(date);
+    }
+
+    function toIso(date) {
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, "0");
+      const d = String(date.getDate()).padStart(2, "0");
+      return `${y}-${m}-${d}`;
+    }
+
+    function storageKey() {
+      return "timetable:preset-2026-06-23-25-29-30";
+    }
+
+    function loadData() {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(storageKey()) || "{}");
+        return { ...getDefaultLunchEntries(), ...parsed };
+      } catch {
+        return getDefaultLunchEntries();
+      }
+    }
+
+    function saveData(data) {
+      localStorage.setItem(storageKey(), JSON.stringify(data));
+    }
+
+    function getDefaultLunchEntries() {
+      return {
+        "2026-06-23|10:30": "Welcome",
+        "2026-06-23|11:00": "Meet the team",
+        "2026-06-23|11:30": "Visit the office",
+        "2026-06-23|12:00": "GEO Lunch\nRoom: E3-131",
+        "2026-06-23|12:30": "GEO Lunch\nRoom: E3-131",
+        "2026-06-23|13:00": "Vessel Detection Labeling",
+        "2026-06-23|13:30": "Vessel Detection Labeling",
+        "2026-06-23|14:00": "Vessel Detection Labeling",
+        "2026-06-23|14:30": "Vessel Detection Labeling",
+        "2026-06-23|15:00": "Project presentation",
+        "2026-06-23|15:30": "Vessel Detection Labeling",
+        "2026-06-23|16:00": "Vessel Detection Labeling",
+        "2026-06-23|16:30": "Vessel Detection Labeling",
+        "2026-06-24|09:00": "Vessel Detection Labeling",
+        "2026-06-24|09:30": "Vessel Detection Labeling",
+        "2026-06-24|10:00": "Vessel Detection Labeling",
+        "2026-06-24|10:30": "Vessel Detection Labeling",
+        "2026-06-24|11:00": "Meeting with Naghi Alessandra",
+        "2026-06-24|11:30": "Meeting with Naghi Alessandra",
+        "2026-06-24|12:00": "Lunch",
+        "2026-06-24|12:30": "Lunch",
+        "2026-06-24|13:00": "Vessel Detection Labeling",
+        "2026-06-24|13:30": "Vessel Detection Labeling",
+        "2026-06-24|14:00": "Vessel Detection Labeling",
+        "2026-06-24|14:30": "Vessel Detection Labeling",
+        "2026-06-24|15:00": "Project presentation",
+        "2026-06-24|15:30": "Vessel Detection Labeling",
+        "2026-06-24|16:00": "Vessel Detection Labeling",
+        "2026-06-24|16:30": "Vessel Detection Labeling",
+        "2026-06-25|12:00": "Lunch",
+        "2026-06-25|12:30": "Lunch",
+        "2026-06-25|09:00": "Vessel Detection Labeling",
+        "2026-06-25|09:30": "Vessel Detection Labeling",
+        "2026-06-25|10:00": "Vessel Detection Labeling",
+        "2026-06-25|10:30": "Vessel Detection Labeling",
+        "2026-06-25|11:00": "Vessel Detection Labeling",
+        "2026-06-25|11:30": "Vessel Detection Labeling",
+        "2026-06-25|13:00": "Vessel Detection Labeling",
+        "2026-06-25|13:30": "Vessel Detection Labeling",
+        "2026-06-25|14:00": "Vessel Detection Labeling",
+        "2026-06-25|14:30": "Vessel Detection Labeling",
+        "2026-06-25|15:00": "Project presentation",
+        "2026-06-25|15:30": "Vessel Detection Labeling",
+        "2026-06-25|16:00": "Vessel Detection Labeling",
+        "2026-06-25|16:30": "Vessel Detection Labeling",
+        "2026-06-29|10:30": "Vessel Detection Labeling",
+        "2026-06-29|11:00": "Vessel Detection Labeling",
+        "2026-06-29|11:30": "Vessel Detection Labeling",
+        "2026-06-29|12:00": "Lunch",
+        "2026-06-29|12:30": "Lunch",
+        "2026-06-29|13:00": "Vessel Detection Labeling",
+        "2026-06-29|13:30": "Vessel Detection Labeling",
+        "2026-06-29|14:00": "Vessel Detection Labeling",
+        "2026-06-29|14:30": "Vessel Detection Labeling",
+        "2026-06-29|15:00": "Project presentation",
+        "2026-06-29|15:30": "Vessel Detection Labeling",
+        "2026-06-29|16:00": "Vessel Detection Labeling",
+        "2026-06-29|16:30": "Vessel Detection Labeling",
+        "2026-06-30|12:00": "Lunch",
+        "2026-06-30|12:30": "Lunch",
+        "2026-06-30|09:00": "Vessel Detection Labeling",
+        "2026-06-30|09:30": "Vessel Detection Labeling",
+        "2026-06-30|10:00": "Vessel Detection Labeling",
+        "2026-06-30|10:30": "Vessel Detection Labeling",
+        "2026-06-30|11:00": "Vessel Detection Labeling",
+        "2026-06-30|11:30": "Vessel Detection Labeling",
+        "2026-06-30|13:00": "Write documentation",
+        "2026-06-30|13:30": "Write documentation",
+        "2026-06-30|14:00": "Write documentation",
+        "2026-06-30|14:30": "Write documentation",
+        "2026-06-30|15:00": "Project presentation",
+        "2026-06-30|15:30": "Write documentation",
+        "2026-06-30|16:00": "Write documentation",
+        "2026-06-30|16:30": "Write documentation",
+      };
+    }
+
+    function build() {
+      const days = presetDayIsos.map((iso) => new Date(`${iso}T00:00:00`));
+      const saved = loadData();
+      table.innerHTML = "";
+
+      const thead = document.createElement("thead");
+      const headerRow = document.createElement("tr");
+      const timeTh = document.createElement("th");
+      timeTh.className = "time";
+      timeTh.textContent = "Time";
+      headerRow.appendChild(timeTh);
+
+      days.forEach((day) => {
+        const th = document.createElement("th");
+        th.textContent = formatDay(day);
+        headerRow.appendChild(th);
+      });
+      thead.appendChild(headerRow);
+      table.appendChild(thead);
+
+      const tbody = document.createElement("tbody");
+
+      timeSlots.forEach((hour) => {
+        const tr = document.createElement("tr");
+        const timeCell = document.createElement("td");
+        timeCell.className = "time";
+        timeCell.textContent = hour;
+        tr.appendChild(timeCell);
+
+        days.forEach((day) => {
+          const iso = toIso(day);
+          const cellKey = `${iso}|${hour}`;
+          const td = document.createElement("td");
+          td.className = "slot";
+          td.contentEditable = "true";
+          td.spellcheck = false;
+          td.dataset.key = cellKey;
+          td.textContent = saved[cellKey] || "";
+          td.addEventListener("input", (e) => {
+            const data = loadData();
+            data[e.currentTarget.dataset.key] = e.currentTarget.textContent.trim();
+            saveData(data);
+            applyBusyStyles(days);
+          });
+          tr.appendChild(td);
+        });
+
+        tbody.appendChild(tr);
+      });
+
+      table.appendChild(tbody);
+      applyBusyStyles(days);
+      updateNowLine();
+    }
+
+    function hideNowIndicator() {
+      nowLine.style.display = "none";
+      nowLabel.style.display = "none";
+    }
+
+    function updateNowLine() {
+      const now = new Date();
+      const todayIso = toIso(now);
+      if (!presetDayIsos.includes(todayIso)) {
+        hideNowIndicator();
+        return;
+      }
+
+      const currentMinutes = now.getHours() * 60 + now.getMinutes() + now.getSeconds() / 60;
+      const startMinutes = 9 * 60;
+      const endMinutes = 18 * 60;
+
+      if (currentMinutes < startMinutes || currentMinutes > endMinutes) {
+        hideNowIndicator();
+        return;
+      }
+
+      const startCell = table.querySelector(`td.slot[data-key="${todayIso}|09:00"]`);
+      const endCell = table.querySelector(`td.slot[data-key="${todayIso}|18:00"]`);
+      if (!startCell || !endCell) {
+        hideNowIndicator();
+        return;
+      }
+
+      const ratio = (currentMinutes - startMinutes) / (endMinutes - startMinutes);
+      const yAbsolute = startCell.offsetTop + ratio * (endCell.offsetTop - startCell.offsetTop);
+      const x = startCell.offsetLeft - tableWrap.scrollLeft;
+      const y = yAbsolute - tableWrap.scrollTop;
+
+      nowLine.style.left = `${x}px`;
+      nowLine.style.top = `${y}px`;
+      nowLine.style.width = `${startCell.offsetWidth}px`;
+      nowLine.style.display = "block";
+
+      const hh = String(now.getHours()).padStart(2, "0");
+      const mm = String(now.getMinutes()).padStart(2, "0");
+      nowLabel.textContent = `Now ${hh}:${mm}`;
+      nowLabel.style.left = `${x + 8}px`;
+      nowLabel.style.top = `${Math.max(0, y - 22)}px`;
+      nowLabel.style.display = "block";
+    }
+
+    function applyBusyStyles(days) {
+      const busyClasses = ["busy", "busy-start", "busy-middle", "busy-end", "busy-single", "busy-welcome", "busy-geo", "busy-vessel", "busy-team", "busy-project", "busy-docs"];
+      table.querySelectorAll("td.slot").forEach((cell) => {
+        cell.classList.remove(...busyClasses);
+      });
+
+      days.forEach((day) => {
+        const iso = toIso(day);
+        const dayCells = timeSlots.map((slot) => table.querySelector(`td.slot[data-key="${iso}|${slot}"]`));
+        let i = 0;
+
+        while (i < dayCells.length) {
+          const startCell = dayCells[i];
+          const startText = startCell ? startCell.textContent.trim() : "";
+
+          if (!startText) {
+            i += 1;
+            continue;
+          }
+
+          let j = i;
+          while (j + 1 < dayCells.length) {
+            const nextCell = dayCells[j + 1];
+            const nextText = nextCell ? nextCell.textContent.trim() : "";
+            if (nextText !== startText) break;
+            j += 1;
+          }
+
+          for (let k = i; k <= j; k += 1) {
+            dayCells[k].classList.add("busy");
+            if (startText.toLowerCase() === "welcome") {
+              dayCells[k].classList.add("busy-welcome");
+            }
+            if (/meeting/i.test(startText)) {
+              dayCells[k].classList.add("busy-geo");
+            }
+            if (startText.toLowerCase().includes("vessel detection labeling")) {
+              dayCells[k].classList.add("busy-vessel");
+            }
+            if (/meet the team|visit the office/i.test(startText)) {
+              dayCells[k].classList.add("busy-team");
+            }
+            if (/project presentation|presentazione progetto|present a project/i.test(startText)) {
+              dayCells[k].classList.add("busy-project");
+            }
+            if (/write documentation|documentazione|documentation/i.test(startText)) {
+              dayCells[k].classList.add("busy-docs");
+            }
+          }
+
+          if (i === j) {
+            dayCells[i].classList.add("busy-single");
+          } else {
+            dayCells[i].classList.add("busy-start");
+            dayCells[j].classList.add("busy-end");
+            for (let k = i + 1; k < j; k += 1) {
+              dayCells[k].classList.add("busy-middle");
+            }
+          }
+
+          i = j + 1;
+        }
+      });
+    }
+
+    tableWrap.addEventListener("scroll", updateNowLine);
+    window.addEventListener("resize", updateNowLine);
+    setInterval(updateNowLine, 30000);
+
+    build();
+  </script>
+</body>
+</html>
