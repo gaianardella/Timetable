@@ -199,6 +199,11 @@
       background: #0d9488 !important;
     }
 
+    td.slot.busy.busy-past {
+      opacity: 0.45;
+      filter: saturate(60%);
+    }
+
     td.slot.busy-start {
       border-top-left-radius: 8px;
       border-top-right-radius: 8px;
@@ -241,7 +246,8 @@
       background: #f2fbff;
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      justify-content: flex-start;
+      gap: 6px;
     }
 
     .resources summary::-webkit-details-marker {
@@ -249,7 +255,7 @@
     }
 
     .resources summary::after {
-      content: "▸";
+      content: "\25B8";
       font-size: 22px;
       color: #000000;
       font-weight: 700;
@@ -342,7 +348,7 @@
         <a href="https://youtu.be/R1ozTMrujOE?si=8u0zkBrvkOC6jL92" target="_blank" rel="noopener noreferrer">🎥 Label Studio Tutorial</a>
         <a href="https://ai.meta.com/research/sam3" target="_blank" rel="noopener noreferrer">🌐 SAM3</a>
         <a href="https://huggingface.co/spaces/prithivMLmods/SAM3-Demo" target="_blank" rel="noopener noreferrer">🌐 SAM3 Demo</a>
-        <a href="http://label-studio.datascienceai.nsf/user/login/" target="_blank" rel="noopener noreferrer">🌐 Label Studio</a>
+        <a href="http://label-studio.datascienceai.nsf/user/login/" target="_blank" rel="noopener noreferrer">🛠️ Label Studio</a>
       </div>
     </details>
 
@@ -358,6 +364,7 @@
     const tableWrap = document.querySelector(".table-wrap");
     const nowLine = document.getElementById("nowLine");
     const nowLabel = document.getElementById("nowLabel");
+    let calendarDays = [];
 
     const timeSlots = [];
     for (let h = 9; h <= 17; h += 1) {
@@ -423,7 +430,7 @@
         "2026-06-24|09:00": "Vessel labelling for AI assessment",
         "2026-06-24|09:30": "Vessel labelling for AI assessment",
         "2026-06-24|10:00": "Vessel labelling for AI assessment",
-        "2026-06-24|10:30": "Vessel labelling for AI assessment",
+        "2026-06-24|10:30": "Meeting with Data Engineering Team",
         "2026-06-24|11:00": "Meeting with Naghi Alessandra",
         "2026-06-24|11:30": "Meeting with Naghi Alessandra",
         "2026-06-24|12:00": "Lunch",
@@ -432,7 +439,7 @@
         "2026-06-24|13:30": "Vessel labelling for AI assessment",
         "2026-06-24|14:00": "Vessel labelling for AI assessment",
         "2026-06-24|14:30": "Vessel labelling for AI assessment",
-        "2026-06-24|15:00": "Project presentation",
+        "2026-06-24|15:00": "Project presentation - Gaia",
         "2026-06-24|15:30": "Vessel labelling for AI assessment",
         "2026-06-24|16:00": "Vessel labelling for AI assessment",
         "2026-06-24|16:30": "Vessel labelling for AI assessment",
@@ -461,7 +468,7 @@
         "2026-06-29|13:30": "Vessel labelling for AI assessment",
         "2026-06-29|14:00": "Vessel labelling for AI assessment",
         "2026-06-29|14:30": "Vessel labelling for AI assessment",
-        "2026-06-29|15:00": "Project presentation",
+        "2026-06-29|15:00": "Project presentation - Theodora",
         "2026-06-29|15:30": "Vessel labelling for AI assessment",
         "2026-06-29|16:00": "Vessel labelling for AI assessment",
         "2026-06-29|16:30": "Vessel labelling for AI assessment",
@@ -485,7 +492,8 @@
     }
 
     function build() {
-      const days = presetDayIsos.map((iso) => new Date(`${iso}T00:00:00`));
+      calendarDays = presetDayIsos.map((iso) => new Date(`${iso}T00:00:00`));
+      const days = calendarDays;
       const saved = loadData();
       table.innerHTML = "";
 
@@ -526,7 +534,7 @@
             const data = loadData();
             data[e.currentTarget.dataset.key] = e.currentTarget.textContent.trim();
             saveData(data);
-            applyBusyStyles(days);
+            applyBusyStyles(calendarDays);
           });
           tr.appendChild(td);
         });
@@ -535,7 +543,7 @@
       });
 
       table.appendChild(tbody);
-      applyBusyStyles(days);
+      applyBusyStyles(calendarDays);
       updateNowLine();
     }
 
@@ -587,7 +595,7 @@
     }
 
     function applyBusyStyles(days) {
-      const busyClasses = ["busy", "busy-start", "busy-middle", "busy-end", "busy-single", "busy-welcome", "busy-geo", "busy-vessel", "busy-team", "busy-project", "busy-docs"];
+      const busyClasses = ["busy", "busy-start", "busy-middle", "busy-end", "busy-single", "busy-welcome", "busy-geo", "busy-vessel", "busy-team", "busy-project", "busy-docs", "busy-past"];
       table.querySelectorAll("td.slot").forEach((cell) => {
         cell.classList.remove(...busyClasses);
       });
@@ -614,8 +622,15 @@
             j += 1;
           }
 
+          const blockEnd = new Date(`${iso}T${timeSlots[j]}:00`);
+          blockEnd.setMinutes(blockEnd.getMinutes() + 30);
+          const isPast = Date.now() >= blockEnd.getTime();
+
           for (let k = i; k <= j; k += 1) {
             dayCells[k].classList.add("busy");
+            if (isPast) {
+              dayCells[k].classList.add("busy-past");
+            }
             if (startText.toLowerCase() === "welcome") {
               dayCells[k].classList.add("busy-welcome");
             }
@@ -653,7 +668,10 @@
 
     tableWrap.addEventListener("scroll", updateNowLine);
     window.addEventListener("resize", updateNowLine);
-    setInterval(updateNowLine, 30000);
+    setInterval(() => {
+      applyBusyStyles(calendarDays);
+      updateNowLine();
+    }, 30000);
 
     build();
   </script>
